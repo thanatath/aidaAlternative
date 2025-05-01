@@ -36,7 +36,7 @@ namespace aidaAlternative.UI
                     {
                         g.FillPath(brush, path);
                     }
-                    using (var pen = new Pen(Color.LimeGreen, 2))
+                    using (var pen = new Pen(Color.White, 2))
                     {
                         g.DrawPath(pen, path);
                     }
@@ -45,7 +45,7 @@ namespace aidaAlternative.UI
                 if (item.Percentage.HasValue)
                 {
                     var barRect = new Rectangle(rect.X + 10, rect.Y + 40, rect.Width - 20, 10);
-                    using (var brush = new LinearGradientBrush(barRect, Color.LimeGreen, Color.DarkGreen, 0f))
+                    using (var brush = new LinearGradientBrush(barRect, Color.DarkGreen, Color.DarkOrange, 0f))
                     {
                         g.FillRectangle(brush, barRect.X, barRect.Y, barRect.Width * item.Percentage.Value, barRect.Height);
                     }
@@ -84,7 +84,7 @@ namespace aidaAlternative.UI
                         0, 0, slideshowImage.Width, slideshowImage.Height, GraphicsUnit.Pixel, attributes);
                 }
 
-                using (var pen = new Pen(Color.LimeGreen, 2))
+                using (var pen = new Pen(Color.White, 2))
                 {
                     using (var path = new GraphicsPath())
                     {
