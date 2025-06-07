@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Net;
-using aidaAlternative.Services;
 using System.Text;
 using System.Threading;
 using System.Net;
@@ -12,17 +11,15 @@ namespace aidaAlternative.WebServer
     {
         private readonly HttpListener listener;
         private readonly string imagesDir;
-        private readonly Action? galleryChanged;
         private Thread? serverThread;
         private bool isRunning;
 
-        public SimpleWebServer(int port = 8080, Action? onGalleryChanged = null)
+        public SimpleWebServer(int port = 8080)
         {
             imagesDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images");
             Directory.CreateDirectory(imagesDir);
             listener = new HttpListener();
             listener.Prefixes.Add($"http://*:{port}/");
-            galleryChanged = onGalleryChanged;
         }
 
         public void Start()
@@ -94,27 +91,19 @@ namespace aidaAlternative.WebServer
         private void ServeGallery(HttpListenerResponse resp)
         {
             var sb = new StringBuilder();
-            sb.Append("<html><head><title>Slideshow Gallery</title>");
-            sb.Append("<script src='https://cdn.tailwindcss.com'></script></head>");
-            sb.Append("<body class='bg-gray-100 p-4'>");
-            sb.Append("<div class='container mx-auto'>");
-            sb.Append("<h1 class='text-2xl font-bold mb-4 text-center'>Slideshow Gallery</h1>");
-            sb.Append("<form class='mb-6 flex flex-col sm:flex-row items-center justify-center gap-2' method='post' enctype='multipart/form-data' action='/upload'>");
-            sb.Append("<input type='file' name='file' class='file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white file:cursor-pointer'/>");
-            sb.Append("<button type='submit' class='bg-green-500 text-white px-4 py-2 rounded'>Upload</button>");
-            sb.Append("</form>");
-            sb.Append("<div class='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'>");
+            sb.Append("<html><body>");
+            sb.Append("<h1>Gallery</h1>");
+            sb.Append("<form method='post' enctype='multipart/form-data' action='/upload'>");
+            sb.Append("<input type='file' name='file'/><input type='submit' value='Upload'/>");
+            sb.Append("</form><hr>");
             foreach (var file in Directory.GetFiles(imagesDir))
             {
                 var name = Path.GetFileName(file);
                 var encoded = WebUtility.UrlEncode(name);
-                sb.Append("<div class='bg-white rounded shadow p-4'>");
-                sb.Append($"<img class='w-full h-auto object-contain mb-2' src='/images/{encoded}' />");
-                sb.Append($"<form method='post' action='/delete?name={encoded}'>");
-                sb.Append("<button class='bg-red-500 text-white px-2 py-1 rounded w-full'>Delete</button>");
-                sb.Append("</form></div>");
+                sb.Append($"<div><img src='/images/{encoded}' style='max-width:200px'/><br>");
+                sb.Append($"<form method='post' action='/delete?name={encoded}'><input type='submit' value='Delete'/></form></div><br>");
             }
-            sb.Append("</div></div></body></html>");
+            sb.Append("</body></html>");
             var bytes = Encoding.UTF8.GetBytes(sb.ToString());
             resp.ContentType = "text/html";
             resp.ContentLength64 = bytes.Length;
@@ -177,7 +166,6 @@ namespace aidaAlternative.WebServer
             var end = content.IndexOf(boundary, start) - 4;
             var fileData = data.AsSpan(start, end - start).ToArray();
             File.WriteAllBytes(Path.Combine(imagesDir, filename), fileData);
-            galleryChanged?.Invoke();
             resp.Redirect("/gallery");
             resp.Close();
         }
@@ -215,7 +203,6 @@ namespace aidaAlternative.WebServer
                 if (File.Exists(path))
                 {
                     File.Delete(path);
-                    galleryChanged?.Invoke();
                 }
             }
             resp.Redirect("/gallery");
