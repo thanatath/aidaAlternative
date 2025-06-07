@@ -38,4 +38,5 @@ A modern, lightweight system monitoring application for Windows, designed to dis
    dotnet run
    ```
 
-The application starts a web server at `http://localhost:8080` where you can upload images and manage the slideshow gallery.
+The application starts a web server at `http://localhost:8080`.
+Visit `/gallery` in your browser to upload or delete images through a responsive interface powered by Tailwind CSS. Any changes made here are immediately reflected in the running slideshow.

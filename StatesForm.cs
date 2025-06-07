@@ -42,7 +42,7 @@ namespace aidaAlternative
             performanceMonitor = new PerformanceMonitor();
             slideshowManager = new SlideshowManager();
             systemTrayManager = new SystemTrayManager(ShowForm, HideForm, ExitApplication);
-            webServer = new SimpleWebServer();
+            webServer = new SimpleWebServer(8080, slideshowManager.ReloadImages);
             webServer.Start();
             statItems = new List<StatItem>();
             InitializeStatItems();

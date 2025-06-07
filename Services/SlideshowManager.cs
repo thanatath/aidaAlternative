@@ -63,6 +63,16 @@ namespace aidaAlternative.Services
             }
         }
 
+        public void ReloadImages()
+        {
+            images.ForEach(img => img.Dispose());
+            images = LoadImages();
+            if (currentIndex >= images.Count)
+            {
+                currentIndex = 0;
+            }
+        }
+
         public void Dispose()
         {
             images?.ForEach(img => img.Dispose());
