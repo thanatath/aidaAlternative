@@ -21,9 +21,21 @@ A modern, lightweight system monitoring application for Windows, designed to dis
 - **Administrative Privileges**: Required for GPU monitoring via LibreHardwareMonitor.
 - **Monitor**: A 960x640 resolution monitor is recommended for optimal display.
 
+
 ## Installation
 
 1. **Clone the Repository**:
    ```bash
    git clone git@github.com:thanatath/aidaAlternative.git
    cd aidaAlternative
+   ```
+2. **Build**:
+   ```bash
+   dotnet build
+   ```
+3. **Run**:
+   ```bash
+   dotnet run
+   ```
+
+The application starts a web server at `http://localhost:8080` where you can upload images and manage the slideshow gallery.

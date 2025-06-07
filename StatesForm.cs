@@ -2,6 +2,7 @@
 using aidaAlternative.Services;
 using aidaAlternative.SystemTray;
 using aidaAlternative.UI;
+using aidaAlternative.WebServer;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,6 +16,7 @@ namespace aidaAlternative
         private readonly PerformanceMonitor performanceMonitor;
         private readonly SlideshowManager slideshowManager;
         private readonly SystemTrayManager systemTrayManager;
+        private readonly SimpleWebServer webServer;
         private readonly List<StatItem> statItems;
         private readonly Timer updateTimer;
         private readonly Timer fadeTimer;
@@ -40,6 +42,8 @@ namespace aidaAlternative
             performanceMonitor = new PerformanceMonitor();
             slideshowManager = new SlideshowManager();
             systemTrayManager = new SystemTrayManager(ShowForm, HideForm, ExitApplication);
+            webServer = new SimpleWebServer();
+            webServer.Start();
             statItems = new List<StatItem>();
             InitializeStatItems();
 
@@ -173,6 +177,7 @@ namespace aidaAlternative
                 performanceMonitor?.Dispose();
                 slideshowManager?.Dispose();
                 systemTrayManager?.Dispose();
+                webServer?.Dispose();
             }
             base.Dispose(disposing);
         }
