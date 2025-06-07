@@ -14,12 +14,12 @@ namespace aidaAlternative.WebServer
         private Thread? serverThread;
         private bool isRunning;
 
-        public SimpleWebServer(int port = 8080)
+        public SimpleWebServer(int port = 5001)
         {
             imagesDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images");
             Directory.CreateDirectory(imagesDir);
             listener = new HttpListener();
-            listener.Prefixes.Add($"http://*:{port}/");
+            listener.Prefixes.Add($"http://127.0.0.1:{port}/");
         }
 
         public void Start()
