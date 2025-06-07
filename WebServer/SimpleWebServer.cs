@@ -88,21 +88,31 @@ namespace aidaAlternative.WebServer
             }
         }
 
+        public event Action? ImagesChanged;
+
         private void ServeGallery(HttpListenerResponse resp)
         {
             var sb = new StringBuilder();
-            sb.Append("<html><body>");
-            sb.Append("<h1>Gallery</h1>");
-            sb.Append("<form method='post' enctype='multipart/form-data' action='/upload'>");
-            sb.Append("<input type='file' name='file'/><input type='submit' value='Upload'/>");
-            sb.Append("</form><hr>");
+            sb.Append("<html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+            sb.Append("<script src='https://cdn.tailwindcss.com'></script>");
+            sb.Append("<title>Gallery</title></head><body class='bg-gray-900 text-white min-h-screen flex flex-col items-center p-4'>");
+            sb.Append("<div class='w-full max-w-3xl'>");
+            sb.Append("<h1 class='text-3xl font-bold mb-6 text-center'>Gallery</h1>");
+            sb.Append("<form method='post' enctype='multipart/form-data' action='/upload' class='flex flex-col sm:flex-row gap-2 items-center justify-center mb-8'>");
+            sb.Append("<input type='file' name='file' class='file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100' required />");
+            sb.Append("<input type='submit' value='Upload' class='bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer' />");
+            sb.Append("</form></div><hr class='border-gray-700 mb-8'>");
+            sb.Append("<div class='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 w-full max-w-5xl mx-auto'>");
             foreach (var file in Directory.GetFiles(imagesDir))
             {
                 var name = Path.GetFileName(file);
                 var encoded = WebUtility.UrlEncode(name);
-                sb.Append($"<div><img src='/images/{encoded}' style='max-width:200px'/><br>");
-                sb.Append($"<form method='post' action='/delete?name={encoded}'><input type='submit' value='Delete'/></form></div><br>");
+                sb.Append($"<div class='bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col items-center'>");
+                sb.Append($"<img src='/images/{encoded}' class='rounded max-w-full max-h-48 object-contain mb-4 border border-gray-700' alt='{encoded}'/>");
+                sb.Append($"<form method='post' action='/delete?name={encoded}' class='w-full flex justify-center'><input type='submit' value='Delete' class='bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded cursor-pointer'/></form>");
+                sb.Append("</div>");
             }
+            sb.Append("</div>");
             sb.Append("</body></html>");
             var bytes = Encoding.UTF8.GetBytes(sb.ToString());
             resp.ContentType = "text/html";
@@ -166,6 +176,7 @@ namespace aidaAlternative.WebServer
             var end = content.IndexOf(boundary, start) - 4;
             var fileData = data.AsSpan(start, end - start).ToArray();
             File.WriteAllBytes(Path.Combine(imagesDir, filename), fileData);
+            ImagesChanged?.Invoke();
             resp.Redirect("/gallery");
             resp.Close();
         }
@@ -200,9 +211,20 @@ namespace aidaAlternative.WebServer
             if (!string.IsNullOrEmpty(name))
             {
                 var path = Path.Combine(imagesDir, name);
-                if (File.Exists(path))
+                try
                 {
-                    File.Delete(path);
+                    if (File.Exists(path))
+                    {
+                        File.Delete(path);
+                        ImagesChanged?.Invoke();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deleting file '{path}': {ex}");
+                    resp.StatusCode = 500;
+                    resp.Close();
+                    return;
                 }
             }
             resp.Redirect("/gallery");

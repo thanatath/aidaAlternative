@@ -8,6 +8,8 @@ namespace aidaAlternative.UI
 {
     public static class StatsRenderer
     {
+        public static bool PauseRendering { get; set; } = false;
+
         public static void Render(PaintEventArgs e, List<StatItem> statItems, Image slideshowImage, float fadeOpacity, float slideshowOpacity)
         {
             var g = e.Graphics;
@@ -20,48 +22,51 @@ namespace aidaAlternative.UI
             }
 
             // Draw stat items
-            foreach (var item in statItems)
+            if (!PauseRendering)
             {
-                var rect = item.Bounds;
-                using (var path = new GraphicsPath())
+                foreach (var item in statItems)
                 {
-                    int radius = 10;
-                    path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
-                    path.AddArc(rect.Width - radius + rect.X, rect.Y, radius, radius, 270, 90);
-                    path.AddArc(rect.Width - radius + rect.X, rect.Height - radius + rect.Y, radius, radius, 0, 90);
-                    path.AddArc(rect.X, rect.Height - radius + rect.Y, radius, radius, 90, 90);
-                    path.CloseFigure();
+                    var rect = item.Bounds;
+                    using (var path = new GraphicsPath())
+                    {
+                        int radius = 10;
+                        path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
+                        path.AddArc(rect.Width - radius + rect.X, rect.Y, radius, radius, 270, 90);
+                        path.AddArc(rect.Width - radius + rect.X, rect.Height - radius + rect.Y, radius, radius, 0, 90);
+                        path.AddArc(rect.X, rect.Height - radius + rect.Y, radius, radius, 90, 90);
+                        path.CloseFigure();
 
-                    using (var brush = new SolidBrush(Color.FromArgb(200, 20, 20, 20)))
-                    {
-                        g.FillPath(brush, path);
+                        using (var brush = new SolidBrush(Color.FromArgb(200, 20, 20, 20)))
+                        {
+                            g.FillPath(brush, path);
+                        }
+                        using (var pen = new Pen(Color.White, 2))
+                        {
+                            g.DrawPath(pen, path);
+                        }
                     }
-                    using (var pen = new Pen(Color.White, 2))
-                    {
-                        g.DrawPath(pen, path);
-                    }
-                }
 
-                if (item.Percentage.HasValue)
-                {
-                    var barRect = new Rectangle(rect.X + 10, rect.Y + 40, rect.Width - 20, 10);
-                    using (var brush = new LinearGradientBrush(barRect, Color.DarkGreen, Color.DarkOrange, 0f))
+                    if (item.Percentage.HasValue)
                     {
-                        g.FillRectangle(brush, barRect.X, barRect.Y, barRect.Width * item.Percentage.Value, barRect.Height);
+                        var barRect = new Rectangle(rect.X + 10, rect.Y + 40, rect.Width - 20, 10);
+                        using (var brush = new LinearGradientBrush(barRect, Color.DarkGreen, Color.DarkOrange, 0f))
+                        {
+                            g.FillRectangle(brush, barRect.X, barRect.Y, barRect.Width * item.Percentage.Value, barRect.Height);
+                        }
+                        using (var pen = new Pen(Color.White, 1))
+                        {
+                            g.DrawRectangle(pen, barRect);
+                        }
                     }
-                    using (var pen = new Pen(Color.White, 1))
-                    {
-                        g.DrawRectangle(pen, barRect);
-                    }
-                }
 
-                using (var font = new Font("Consolas", 20, FontStyle.Bold))
-                {
-                    var text = $"{item.Name}: {item.Value}";
-                    var textPoint = new PointF(rect.X + 10, rect.Y + 10);
-                    using (var textBrush = new SolidBrush(Color.FromArgb((int)(255 * fadeOpacity), 255, 255, 255)))
+                    using (var font = new Font("Consolas", 20, FontStyle.Bold))
                     {
-                        g.DrawString(text, font, textBrush, textPoint);
+                        var text = $"{item.Name}: {item.Value}";
+                        var textPoint = new PointF(rect.X + 10, rect.Y + 10);
+                        using (var textBrush = new SolidBrush(Color.FromArgb((int)(255 * fadeOpacity), 255, 255, 255)))
+                        {
+                            g.DrawString(text, font, textBrush, textPoint);
+                        }
                     }
                 }
             }
@@ -70,7 +75,14 @@ namespace aidaAlternative.UI
             var slideshowRect = new Rectangle(500, 50, 440, 540);
             if (slideshowImage != null)
             {
-                float scale = Math.Min((float)slideshowRect.Width / slideshowImage.Width, (float)slideshowRect.Height / slideshowImage.Height);
+                float scale = 1.0f;
+                try {
+                    scale = Math.Min((float)slideshowRect.Width / slideshowImage.Width, (float)slideshowRect.Height / slideshowImage.Height);
+                }
+                catch (Exception ex)
+                {
+                    return;
+                }
                 int scaledWidth = (int)(slideshowImage.Width * scale);
                 int scaledHeight = (int)(slideshowImage.Height * scale);
                 int x = slideshowRect.X + (slideshowRect.Width - scaledWidth) / 2;

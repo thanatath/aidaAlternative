@@ -31,7 +31,14 @@ namespace aidaAlternative.Services
                     {
                         try
                         {
-                            images.Add(Image.FromFile(file));
+                            // Fix: Load image into memory to avoid file lock
+                            using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                            using (var ms = new MemoryStream())
+                            {
+                                fs.CopyTo(ms);
+                                ms.Position = 0;
+                                images.Add(Image.FromStream(ms));
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -61,6 +68,13 @@ namespace aidaAlternative.Services
             {
                 currentIndex = (currentIndex + 1) % images.Count;
             }
+        }
+
+        public void ReloadImages()
+        {
+            images?.ForEach(img => img.Dispose());
+            images = LoadImages();
+            currentIndex = 0;
         }
 
         public void Dispose()

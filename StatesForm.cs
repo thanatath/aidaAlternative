@@ -43,6 +43,19 @@ namespace aidaAlternative
             slideshowManager = new SlideshowManager();
             systemTrayManager = new SystemTrayManager(ShowForm, HideForm, ExitApplication);
             webServer = new SimpleWebServer();
+            webServer.ImagesChanged += () =>
+            {
+                StatsRenderer.PauseRendering = true;
+                try
+                {
+                    slideshowManager.ReloadImages();
+                }
+                finally
+                {
+                    StatsRenderer.PauseRendering = false;
+                }
+                Invalidate();
+            };
             webServer.Start();
             statItems = new List<StatItem>();
             InitializeStatItems();
