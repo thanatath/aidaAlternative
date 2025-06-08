@@ -12,30 +12,32 @@ namespace aidaAlternative
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Find the monitor with 960x640 resolution
-            Screen targetScreen = Screen.AllScreens
-                .FirstOrDefault(x => x.Bounds.Width == 960 && x.Bounds.Height == 640)
-                ?? Screen.PrimaryScreen;
-
-            // Debug: List all screens for verification
-            Console.WriteLine("Available screens:");
-            foreach (var screen in Screen.AllScreens)
+            Screen targetScreen = null;
+            while (true)
             {
-                Console.WriteLine($"Screen: {screen.DeviceName}, Resolution: {screen.Bounds.Width}x{screen.Bounds.Height}, " +
-                                  $"Location: {screen.Bounds.X},{screen.Bounds.Y}, Primary: {screen.Primary}");
-            }
-            Console.WriteLine($"Selected screen: {targetScreen.DeviceName}, Resolution: {targetScreen.Bounds.Width}x{targetScreen.Bounds.Height}, " +
-                              $"Location: {targetScreen.Bounds.X},{targetScreen.Bounds.Y}");
+                // Find the monitor with 960x640 resolution
+                targetScreen = Screen.AllScreens
+                    .FirstOrDefault(x => x.Bounds.Width == 960 && x.Bounds.Height == 640);
 
-            // Check if the target screen matches 960x640
-            if (targetScreen.Bounds.Width != 960 || targetScreen.Bounds.Height != 640)
-            {
-                MessageBox.Show(
-                    $"Monitor with 960x640 resolution not found. Using {targetScreen.DeviceName} ({targetScreen.Bounds.Width}x{targetScreen.Bounds.Height}). " +
-                    "Check Windows Display Settings.",
-                    "Warning",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                // Debug: List all screens for verification
+                Console.WriteLine("Available screens:");
+                foreach (var screen in Screen.AllScreens)
+                {
+                    Console.WriteLine($"Screen: {screen.DeviceName}, Resolution: {screen.Bounds.Width}x{screen.Bounds.Height}, " +
+                                      $"Location: {screen.Bounds.X},{screen.Bounds.Y}, Primary: {screen.Primary}");
+                }
+
+                if (targetScreen != null)
+                {
+                    Console.WriteLine($"Selected screen: {targetScreen.DeviceName}, Resolution: {targetScreen.Bounds.Width}x{targetScreen.Bounds.Height}, " +
+                                      $"Location: {targetScreen.Bounds.X},{targetScreen.Bounds.Y}");
+                    break;
+                }
+                else
+                {
+                    // No warning message, just wait and rescan
+                    System.Threading.Thread.Sleep(60000); // Wait 1 minute before rescanning
+                }
             }
 
             using (var form = new StatsForm(targetScreen))
