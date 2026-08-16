@@ -1,23 +1,31 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using aidaAlternative.Services;
+using aidaAlternative.UI;
 
 namespace aidaAlternative
 {
     internal static class Program
     {
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            DisplayGuard.AssertPositionMapping();
+            StatsRenderer.AssertAssetsLoaded();
+            if (args.Contains("--self-check"))
+            {
+                var usageMonitor = new AiUsageMonitor();
+                usageMonitor.RefreshIfDue();
+                return;
+            }
 
-            Screen targetScreen = null;
+            Screen? targetScreen = null;
             while (true)
             {
-                // Find the monitor with 960x640 resolution
-                targetScreen = Screen.AllScreens
-                    .FirstOrDefault(x => x.Bounds.Width == 960 && x.Bounds.Height == 640);
+                targetScreen = FindTargetScreen();
 
                 // Debug: List all screens for verification
                 Console.WriteLine("Available screens:");
@@ -45,5 +53,9 @@ namespace aidaAlternative
                 Application.Run(form);
             }
         }
+
+        // ponytail: re-enumerated on every call, Screen objects are snapshots and go stale on unplug/replug
+        internal static Screen? FindTargetScreen() =>
+            Screen.AllScreens.FirstOrDefault(x => x.Bounds.Width == 960 && x.Bounds.Height == 640);
     }
 }

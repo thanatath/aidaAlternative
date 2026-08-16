@@ -29,7 +29,9 @@ namespace aidaAlternative.Services
                 networkUploadCounters.Add(new PerformanceCounter("Network Interface", "Bytes Sent/sec", instance));
             }
 
-            computer = new Computer { IsGpuEnabled = true, IsNetworkEnabled = true };
+            // ponytail: GPU only — network numbers come from the PerformanceCounters above, and LHM's
+            // network update calls GetAllNetworkInterfaces() (~96ms with 80 adapters) on every tick
+            computer = new Computer { IsGpuEnabled = true };
             computer.Open();
         }
 

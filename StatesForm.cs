@@ -14,34 +14,50 @@ namespace aidaAlternative
     public class StatsForm : Form
     {
         private readonly PerformanceMonitor performanceMonitor;
+        /* Slideshow retained for possible restoration.
         private readonly SlideshowManager slideshowManager;
+        */
         private readonly SystemTrayManager systemTrayManager;
+        /* Slideshow gallery retained for possible restoration.
         private readonly SimpleWebServer webServer;
+        */
+        private readonly DisplayGuard displayGuard;
+        private readonly AiUsageMonitor aiUsageMonitor;
         private readonly List<StatItem> statItems;
         private readonly Timer updateTimer;
         private readonly Timer fadeTimer;
+        /* Slideshow timers retained for possible restoration.
         private readonly Timer slideshowTimer;
         private readonly Timer slideshowFadeTimer;
+        */
         private float fadeOpacity = 1f;
         private bool fadeIn = false;
+        /* Slideshow fade state retained for possible restoration.
         private float slideshowOpacity = 1f;
         private bool slideshowFadeIn = false;
+        */
         private bool allowClose = false;
+        private bool userHidden = false;
 
         public StatsForm(Screen targetScreen)
         {
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.Manual;
-            Location = new Point(targetScreen.Bounds.X, targetScreen.Bounds.Y);
-            Size = new Size(targetScreen.Bounds.Width, targetScreen.Bounds.Height);
+            Bounds = targetScreen.Bounds;
             TopMost = true;
             DoubleBuffered = true;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
             ShowInTaskbar = false;
 
             performanceMonitor = new PerformanceMonitor();
+            /* Slideshow retained for possible restoration.
             slideshowManager = new SlideshowManager();
+            */
             systemTrayManager = new SystemTrayManager(ShowForm, HideForm, ExitApplication);
+            displayGuard = new DisplayGuard();
+            aiUsageMonitor = new AiUsageMonitor();
+            aiUsageMonitor.RefreshIfDue();
+            /* Slideshow gallery retained for possible restoration.
             webServer = new SimpleWebServer();
             webServer.ImagesChanged += () =>
             {
@@ -57,6 +73,7 @@ namespace aidaAlternative
                 Invalidate();
             };
             webServer.Start();
+            */
             statItems = new List<StatItem>();
             InitializeStatItems();
 
@@ -81,6 +98,7 @@ namespace aidaAlternative
             };
             fadeTimer.Start();
 
+            /* Slideshow timers retained for possible restoration.
             slideshowTimer = new Timer { Interval = 5000 };
             slideshowTimer.Tick += (s, e) =>
             {
@@ -105,12 +123,13 @@ namespace aidaAlternative
                 }
             };
             slideshowFadeTimer.Start();
+            */
         }
 
         private void InitializeStatItems()
         {
-            int x = 20, y = 50, spacing = 80;
-            int width = 450, height = 60;
+            int x = 20, y = 50, spacing = 84;
+            int width = 450, height = 64;
 
             statItems.Add(new StatItem { Name = "CPU", Bounds = new Rectangle(x, y, width, height) });
             y += spacing;
@@ -127,8 +146,28 @@ namespace aidaAlternative
             statItems.Add(new StatItem { Name = "GPU Temp", Bounds = new Rectangle(x, y, width, height) });
         }
 
+        // ponytail: re-asserted every second instead of hooking DisplaySettingsChanged,
+        // Windows fires that event before it finishes shuffling windows back
+        private void SnapToTargetScreen()
+        {
+            var screen = Program.FindTargetScreen();
+            if (screen == null)
+            {
+                if (Visible) Hide();
+                return;
+            }
+            if (Bounds != screen.Bounds)
+            {
+                Bounds = screen.Bounds;
+                TopMost = true;
+            }
+            if (!Visible && !userHidden) Show();
+        }
+
         private void UpdateStats(object sender, EventArgs e)
         {
+            SnapToTargetScreen();
+            aiUsageMonitor.RefreshIfDue();
             var stats = performanceMonitor.GetStats();
             foreach (var stat in stats)
             {
@@ -145,11 +184,15 @@ namespace aidaAlternative
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+            /* Slideshow render retained for possible restoration.
             StatsRenderer.Render(e, statItems, slideshowManager.GetCurrentImage(), fadeOpacity, slideshowOpacity);
+            */
+            StatsRenderer.Render(e, statItems, aiUsageMonitor.Snapshot, fadeOpacity);
         }
 
         private void ShowForm()
         {
+            userHidden = false;
             Show();
             WindowState = FormWindowState.Normal;
             TopMost = true;
@@ -158,6 +201,7 @@ namespace aidaAlternative
 
         private void HideForm()
         {
+            userHidden = true;
             Hide();
             systemTrayManager.EnableShow();
         }
@@ -185,12 +229,19 @@ namespace aidaAlternative
             {
                 updateTimer?.Dispose();
                 fadeTimer?.Dispose();
+                /* Slideshow timers retained for possible restoration.
                 slideshowTimer?.Dispose();
                 slideshowFadeTimer?.Dispose();
+                */
                 performanceMonitor?.Dispose();
+                /* Slideshow retained for possible restoration.
                 slideshowManager?.Dispose();
+                */
                 systemTrayManager?.Dispose();
+                displayGuard?.Dispose();
+                /* Slideshow gallery retained for possible restoration.
                 webServer?.Dispose();
+                */
             }
             base.Dispose(disposing);
         }
